@@ -9,7 +9,7 @@
       <div>Click them to mark them as known words</div>
       <ol class="item-list">
         <li v-for="(item, index) in wordFrequencies" :key="index" @click="addKnownWord(item.word)">
-          {{ item.word }} - {{ item.count }}
+          <b>{{ item.word.toUpperCase() }}</b> <span class="count">{{ item.count }}</span>
         </li>
       </ol>
     </div>
@@ -19,7 +19,7 @@
       <div>Click them to forget them</div>
       <ul class="item-list">
         <li v-for="(word, index) in knownWords" :key="index" @click="removeKnownWord(word)">
-          {{ word }}
+          {{ word.toUpperCase() }} <span class="cross">╳</span>
         </li>
       </ul>
     </div>
@@ -198,6 +198,10 @@ li:hover {
     font-family: Arial, sans-serif;
     padding: 20px;
   }
+  .count {
+    color: #666;
+    font-size: 0.8em;
+  }
   .import {
     margin: 2em;
     border: 1px dashed #333;
@@ -229,12 +233,13 @@ li:hover {
     border: 1px solid #444;
     padding: 1em 2em;
     margin-bottom: 5px;
-    text-align: left;
+    text-align: center;
   }
   .item-list li .cross {
     float: right;
     font-weight: bold;
-    background: gray;
+    background: #222;
+    color:white;
     width: 40px;
     line-height: 40px;
     text-align: center;
