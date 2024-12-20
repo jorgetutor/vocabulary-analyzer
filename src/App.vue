@@ -2,7 +2,7 @@
   <div class="app">
     <h1>Subtitles/Text File Processor</h1>
     <div>File processor to analyze words displayed on documents so you can learn them</div>
-    <div class="import">Import Text: <input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub" /></div>
+    <div class="import">Import Text: <br /><input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub" /></div>
 
     <div v-if="wordFrequencies.length > 0" style="margin-top:20px;">
       <h2>Words:  {{ wordFrequencies.length }}</h2>
@@ -19,13 +19,13 @@
       <div>Click them to forget them</div>
       <ul class="item-list">
         <li v-for="(word, index) in knownWords" :key="index" @click="removeKnownWord(word)">
-          {{ word.toUpperCase() }} <span class="cross">╳</span>
+          {{ word.toUpperCase() }}
         </li>
       </ul>
     </div>
     <div>
       <h3>Manage Known Words</h3>
-      <div class="import">Import Words: <input type="file" @change="importKnownWords" accept=".json" /></div>
+      <div class="import">Import Words: <br /><input type="file" @change="importKnownWords" accept=".json" /></div>
       <button @click="exportKnownWords">Export Known Words</button>
       <button @click="clearKnownWords" class="alert">Forget them ALL!</button>
     </div>
@@ -177,74 +177,3 @@ function importKnownWords(event) {
   reader.readAsText(file)
 }
 </script>
-
-<style>
-.app {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-li {
-  cursor: pointer;
-}
-li:hover {
-  background: #f0f0f0;
-  color:#444;
-}
-</style>
-
-
-<style>
-  .app {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-  }
-  .count {
-    color: #666;
-    font-size: 0.8em;
-  }
-  .import {
-    margin: 2em;
-    border: 1px dashed #333;
-    padding: 2em;
-    background: #222;
-  }
-  button {
-    background: #333;
-    color: white;
-    border: none;
-    padding: 0.5em 1em;
-    margin-top: 1em;
-    cursor: pointer;
-    margin-right: 1em;
-  }
-  button.alert {
-    background: red;
-    color: white;
-    border: none;
-    padding: 0.5em 1em;
-    margin-top: 1em;
-    cursor: pointer;
-  }
-  .item-list {
-    list-style-type: none;
-    padding: 0;
-  }
-  .item-list li {
-    border: 1px solid #444;
-    padding: 1em 2em;
-    margin-bottom: 5px;
-    text-align: center;
-  }
-  .item-list li .cross {
-    float: right;
-    font-weight: bold;
-    background: #222;
-    color:white;
-    width: 40px;
-    line-height: 40px;
-    text-align: center;
-    border-radius: 50%;
-    margin-top: -0.5em;
-    cursor: pointer;
-  }
-</style>
