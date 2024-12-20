@@ -1,7 +1,8 @@
 <template>
   <div class="app">
-    <h1>Subtitle/Text File Processor with Known Words</h1>
-    <input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub" />
+    <h1>Subtitles/Text File Processor</h1>
+    <div>File processor to analyze words displayed on documents so you can learn them</div>
+    <div class="import">Import Text: <input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub" /></div>
 
     <div v-if="wordFrequencies.length > 0" style="margin-top:20px;">
       <h2>Words:  {{ wordFrequencies.length }}</h2>
@@ -15,18 +16,18 @@
 
     <div v-if="knownWords.length > 0" style="margin-top:20px;">
       <h2>Known Words: {{ knownWords.length }}</h2>
+      <div>Click them to forget them</div>
       <ul class="item-list">
         <li v-for="(word, index) in knownWords" :key="index" @click="removeKnownWord(word)">
           {{ word }}
         </li>
       </ul>
     </div>
-
     <div>
       <h3>Manage Known Words</h3>
-      <div>Click them to forget them</div>
+      <div class="import">Import Words: <input type="file" @change="importKnownWords" accept=".json" /></div>
       <button @click="exportKnownWords">Export Known Words</button>
-      <input type="file" @change="importKnownWords" accept=".json" />
+      <button @click="clearKnownWords" class="alert">Forget them ALL!</button>
     </div>
   </div>
 </template>
@@ -129,6 +130,11 @@ function removeKnownWord(word) {
   }
 }
 
+function clearKnownWords() {
+  knownWords.value = []
+  saveKnownWords()
+}
+
 function exportKnownWords() {
   const data = JSON.stringify(knownWords.value, null, 2)
   const blob = new Blob([data], { type: 'application/json' })
@@ -191,6 +197,29 @@ li:hover {
   .app {
     font-family: Arial, sans-serif;
     padding: 20px;
+  }
+  .import {
+    margin: 2em;
+    border: 1px dashed #333;
+    padding: 2em;
+    background: #222;
+  }
+  button {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    margin-top: 1em;
+    cursor: pointer;
+    margin-right: 1em;
+  }
+  button.alert {
+    background: red;
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    margin-top: 1em;
+    cursor: pointer;
   }
   .item-list {
     list-style-type: none;
