@@ -14,7 +14,7 @@
     </div>
 
     <div v-if="knownWords.length > 0" style="margin-top:20px;">
-      <h2>Known Words</h2>
+      <h2>Known Words: {{ knownWords.length }}</h2>
       <ul class="item-list">
         <li v-for="(word, index) in knownWords" :key="index" @click="removeKnownWord(word)">
           {{ word }}
