@@ -8,7 +8,7 @@
       <h2>Words:  {{ wordFrequencies.length }}</h2>
       <div>Click them to mark them as known words</div>
       <ol class="item-list">
-        <li v-for="(item, index) in wordFrequencies" :key="index" @click="addKnownWord(item.word)">
+        <li v-for="item in wordFrequencies" :key="item.word" @click="addKnownWord(item.word)">
           <b>{{ item.word.toUpperCase() }}</b> <span class="count">{{ item.count }}</span>
         </li>
       </ol>
@@ -18,7 +18,7 @@
       <h2>Known Words: {{ knownWords.length }}</h2>
       <div>Click them to forget them</div>
       <ul class="item-list">
-        <li v-for="(word, index) in knownWords" :key="index" @click="removeKnownWord(word)">
+        <li v-for="word in knownWords" :key="word" @click="removeKnownWord(word)">
           {{ word.toUpperCase() }}
         </li>
       </ul>
@@ -73,6 +73,9 @@ function handleFileUpload(event) {
   }
   
   reader.readAsText(file)
+
+  // Reset the input so selecting the same file again triggers change
+  event.target.value = ''
 }
 
 function processText(text) {
@@ -80,23 +83,20 @@ function processText(text) {
   // and convert to lowercase (matching is case-insensitive)
   let cleanedText = text
     .replace(/[^a-zA-Z\s']/g, ' ')
-    .toLowerCase()
-
-  // Split into words by whitespace
-  let words = cleanedText.split(/\s+/).filter(w => w.trim() !== '')
-
-  // Reconstruct text from words
-  let reconstructedText = words.join(' ')
+    .toUpperCase()
 
   // Handle phrasal verbs:
   phrasalVerbs.forEach(pv => {
     const singleToken = pv.replace(/\s+/g, '_')
     const regex = new RegExp(`\\b${pv}\\b`, 'g')
-    reconstructedText = reconstructedText.replace(regex, singleToken)
+    cleanedText = cleanedText.replace(regex, singleToken)
   })
 
-  // Split again after phrasal replacements
-  words = reconstructedText.split(/\s+/).filter(w => w.trim() !== '')
+  // Split into words by whitespace
+  let words = cleanedText.split(/\s+/).filter(w => w.trim() !== '')
+
+  // Remove one letter words:
+  words = words.filter(w => w.length > 1)
 
   // Count frequencies
   const frequencyMap = {}
@@ -148,25 +148,32 @@ function exportKnownWords() {
 }
 
 function importKnownWords(event) {
-  const file = event.target.files[0]
-  if (!file) return
-
+  const file = event.target.files ? event.target.files[0] : null
+  if (!file) {
+    return
+  }
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = (readerEvent) => {
     try {
-      const importedWords = JSON.parse(e.target.result)
+      const textResult = readerEvent.target.result
+      const importedWords = JSON.parse(textResult)
+      console.log('Imported Words:', importedWords)
+
       if (Array.isArray(importedWords)) {
-        // Merge unique words
-        const set = new Set([...knownWords.value, ...importedWords])
+        const normalizedImportedWords = importedWords.map(word => word.toUpperCase())
+        const set = new Set([...knownWords.value, ...normalizedImportedWords])
         knownWords.value = Array.from(set)
         saveKnownWords()
-        // After updating known words, re-filter the existing wordFrequencies
-        wordFrequencies.value = wordFrequencies.value.filter(item => !knownWords.value.includes(item.word))
+
+        // Update wordFrequencies after merging known words
+        wordFrequencies.value = wordFrequencies.value.filter(
+          item => !knownWords.value.includes(item.word.toUpperCase())
+        )
       } else {
         console.error('Imported file does not contain an array of words.')
       }
     } catch (error) {
-      console.error('Invalid JSON:', error)
+      console.error('Error parsing JSON:', error)
     }
   }
 
@@ -174,6 +181,11 @@ function importKnownWords(event) {
     console.error('Error reading file:', e)
   }
 
+  // Start reading the file as text
   reader.readAsText(file)
+
+  // Reset the input so selecting the same file again triggers change
+  event.target.value = ''
 }
+
 </script>
