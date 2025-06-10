@@ -1,16 +1,38 @@
 <template>
-  <div class="word-player">
-    <div class="display">
-      <div class="timer">{{ displayTime }}</div>
-      <div class="word">{{ currentWord }}</div>
+  <div class="word-player border border-gray-500 mt-4 mb-8 p-4">
+    <div class="display flex justify-center text-2xl mb-2">
+      <div class="timer font-bold mr-2">{{ displayTime }}</div>
+      <div class="word uppercase p-4">{{ currentWord }}</div>
     </div>
-    <div class="controls">
+    <div class="controls flex items-center justify-center gap-2">
       <template v-if="!isPlaying">
-        <input type="number" v-model.number="hours" min="0" /> :
-        <input type="number" v-model.number="minutes" min="0" max="59" /> :
-        <input type="number" v-model.number="seconds" min="0" max="59" />
+        <input
+          type="number"
+          v-model.number="hours"
+          min="0"
+          class="w-12 text-center border rounded bg-transparent"
+        />
+        :
+        <input
+          type="number"
+          v-model.number="minutes"
+          min="0"
+          max="59"
+          class="w-12 text-center border rounded bg-transparent"
+        />
+        :
+        <input
+          type="number"
+          v-model.number="seconds"
+          min="0"
+          max="59"
+          class="w-12 text-center border rounded bg-transparent"
+        />
       </template>
-      <button @click="isPlaying ? stop() : start()">
+      <button
+        @click="isPlaying ? stop() : start()"
+        class="ml-2 px-4 py-1 rounded bg-blue-600 hover:bg-blue-700"
+      >
         {{ isPlaying ? 'Stop' : 'Play' }}
       </button>
     </div>
@@ -102,31 +124,3 @@ function stop() {
 }
 </script>
 
-<style scoped>
-.word-player {
-  margin-bottom: 2em;
-}
-.display {
-  font-size: 2em;
-  margin-bottom: 0.5em;
-}
-.timer {
-  font-weight: bold;
-  margin-right: 0.5em;
-}
-.word {
-  text-transform: uppercase;
-}
-.controls input {
-  width: 3em;
-  text-align: center;
-}
-.word-player {
-  border: 1px solid gray;
-  margin-top: 1em;
-  padding: 1em;
-}
-.word-player .word {
-  padding: 1em;
-}
-</style>

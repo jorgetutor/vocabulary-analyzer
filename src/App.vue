@@ -1,13 +1,16 @@
 <template>
-  <div class="app">
-    <h1>Vocabulary Analyzer</h1>
-    <div>File processor to analyze words displayed on documents so you can learn them.</div>
+  <div class="app max-w-3xl mx-auto p-4 text-center">
+    <h1 class="text-4xl font-bold mb-2">Vocabulary Analyzer</h1>
+    <div class="mb-4 text-gray-300">File processor to analyze words displayed on documents so you can learn them.</div>
     <WordPlayer :words="knownWords" />
-    <div class="import">Import Text: <br /><input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub,.md" /></div>
+    <div class="import my-4 border border-dashed border-gray-600 p-4 bg-gray-800">
+      Import Text: <br />
+      <input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub,.md" />
+    </div>
 
-    <div v-if="wordFrequencies.length > 0" style="margin-top:20px;">
-      <h2>Words:  {{ wordFrequencies.length }}</h2>
-      <div>Click them to mark them as known words</div>
+    <div v-if="wordFrequencies.length > 0" class="mt-5">
+      <h2 class="text-2xl font-semibold">Words:  {{ wordFrequencies.length }}</h2>
+      <div class="text-sm text-gray-400 mb-2">Click them to mark them as known words</div>
       <ol class="item-list">
         <li v-for="item in wordFrequencies" :key="item.word" @click="addKnownWord(item.word)">
           <b>{{ item.word.toUpperCase() }}</b> <span class="count">{{ item.count }}</span>
@@ -15,9 +18,9 @@
       </ol>
     </div>
 
-    <div v-if="knownWords.length > 0" style="margin-top:20px;">
-      <h2>Known Words: {{ knownWords.length }}</h2>
-      <div>Click them to forget them</div>
+    <div v-if="knownWords.length > 0" class="mt-5">
+      <h2 class="text-2xl font-semibold">Known Words: {{ knownWords.length }}</h2>
+      <div class="text-sm text-gray-400 mb-2">Click them to forget them</div>
       <ul class="item-list">
         <li v-for="word in knownWords" :key="word" @click="removeKnownWord(word)">
           {{ word.toUpperCase() }}
@@ -25,10 +28,13 @@
       </ul>
     </div>
     <div>
-      <h3>Manage Known Words</h3>
-      <div class="import">Import Words: <br /><input type="file" @change="importKnownWords" accept=".json" /></div>
-      <button @click="exportKnownWords">Export Known Words</button>
-      <button @click="clearKnownWords" class="alert">Forget them ALL!</button>
+      <h3 class="text-xl font-semibold mt-6">Manage Known Words</h3>
+      <div class="import my-4 border border-dashed border-gray-600 p-4 bg-gray-800">
+        Import Words: <br />
+        <input type="file" @change="importKnownWords" accept=".json" />
+      </div>
+      <button @click="exportKnownWords" class="bg-green-600 hover:bg-green-700 px-4 py-1 rounded">Export Known Words</button>
+      <button @click="clearKnownWords" class="alert bg-red-600 hover:bg-red-700 px-4 py-1 rounded">Forget them ALL!</button>
     </div>
   </div>
 </template>
