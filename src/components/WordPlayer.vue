@@ -1,8 +1,8 @@
 <template>
   <div class="word-player">
     <div class="display">
-      <span class="timer">{{ displayTime }}</span>
-      <span class="word">{{ currentWord }}</span>
+      <div class="timer">{{ displayTime }}</div>
+      <div class="word">{{ currentWord }}</div>
     </div>
     <div class="controls">
       <template v-if="!isPlaying">
@@ -28,7 +28,7 @@ const props = defineProps({
 })
 
 const hours = ref(0)
-const minutes = ref(0)
+const minutes = ref(1)
 const seconds = ref(0)
 
 const totalSeconds = ref(0)
@@ -120,5 +120,13 @@ function stop() {
 .controls input {
   width: 3em;
   text-align: center;
+}
+.word-player {
+  border: 1px solid gray;
+  margin-top: 1em;
+  padding: 1em;
+}
+.word-player .word {
+  padding: 1em;
 }
 </style>
