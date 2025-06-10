@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <WordPlayer :words="knownWords" />
     <h1>Subtitles/Text File Processor</h1>
     <div>File processor to analyze words displayed on documents so you can learn them.</div>
     <div class="import">Import Text: <br /><input type="file" @change="handleFileUpload" accept=".srt,.txt,.sub,.md" /></div>
@@ -34,6 +35,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import WordPlayer from './components/WordPlayer.vue'
 import phrasalVerbs from './data/phrasalVerbs.json'
 import defaultKnownWords from './data/defaultKnownWords.json'
 
