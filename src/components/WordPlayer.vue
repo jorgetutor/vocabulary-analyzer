@@ -1,10 +1,10 @@
 <template>
-  <div class="word-player border border-gray-500 mt-4 mb-8 p-4">
-    <div class="display flex justify-center text-2xl mb-2">
+  <div class="word-player border border-dashed border-gray-50 mt-4 mb-8 p-4">
+    <div class="display justify-center text-2xl mb-2">
       <div class="timer font-bold mr-2">{{ displayTime }}</div>
-      <div class="word uppercase p-4">{{ currentWord }}</div>
+      <div class="word uppercase p-4 text-3x1 font-extrabold text-8xl">{{ currentWord }}</div>
     </div>
-    <div class="controls flex items-center justify-center gap-2">
+    <div class="controls items-center justify-center gap-2">
       <template v-if="!isPlaying">
         <input
           type="number"
