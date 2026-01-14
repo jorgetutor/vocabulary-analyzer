@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
 2:I[47257,["/vocabulary-analyzer/_next/static/chunks/4fd93823156e59e8.js"],"ClientPageRoot"]
-3:I[31713,["/vocabulary-analyzer/_next/static/chunks/94995622f18a2f56.js"],"default"]
+3:I[31713,["/vocabulary-analyzer/_next/static/chunks/865339d81d8fad21.js"],"default"]
 6:I[97367,["/vocabulary-analyzer/_next/static/chunks/4fd93823156e59e8.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"buildId":"9YiVZqfUzq_9DyUAyYhI2","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/vocabulary-analyzer/_next/static/chunks/94995622f18a2f56.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"0psenY7UYbnZeLmYSmo16","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/vocabulary-analyzer/_next/static/chunks/865339d81d8fad21.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
