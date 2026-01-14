@@ -125,7 +125,7 @@ export default function Home() {
     <div className="app max-w-5xl mx-auto p-6 md:p-12 text-center min-h-screen text-gray-800 dark:text-gray-100 font-sans selection:bg-purple-200 dark:selection:bg-purple-900">
       <header className="mb-12">
         <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 drop-shadow-sm">
-          Vocabulary Analyzer
+          Vocabulary Builder
         </h1>
         <p className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
           Your personal <strong className="font-semibold text-primary-600 dark:text-primary-400">linguistic companion</strong>. Extract, track, and master words from your documents.
@@ -138,6 +138,10 @@ export default function Home() {
           <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1 max-w-[100px]"></div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Trainer</h2>
           <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1 max-w-[100px]"></div>
+        </div>
+
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200">The Speaker</h3>
         </div>
         <Speaker words={knownWords} />
       </section>
@@ -155,19 +159,21 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <button
                 onClick={markAllAsKnown}
-                className="px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm active:scale-95"
+                className="px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                 Known All
               </button>
               <button
                 onClick={clearFile}
-                className="px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900/50 rounded-lg transition-colors active:scale-95"
+                className="px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900/50 rounded-lg transition-colors active:scale-95 flex items-center gap-2 cursor-pointer"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 Clear List
               </button>
             </div>
           </div>
-          <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to mark as known</div>
+          <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to <strong className="font-bold text-gray-500 dark:text-gray-300">mark as known</strong></div>
 
           <ol className="flex items-start flex-wrap gap-3 justify-center">
             {wordFrequencies.map((item) => (
@@ -208,7 +214,7 @@ export default function Home() {
       </div>
 
       {knownWords.length > 0 && (
-        <div className="mt-16 animate-fade-in">
+        <div className="mt-16 animate-fade-in pb-20">
           <div className="flex flex-col md:flex-row items-center justify-between mb-6 px-2 border-b border-gray-200 dark:border-slate-800 pb-4 gap-4">
             <div className="flex items-center gap-3">
               <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
@@ -216,12 +222,36 @@ export default function Home() {
                 <span className="text-sm font-bold bg-green-100 dark:bg-emerald-900/30 text-green-700 dark:text-emerald-400 px-3 py-1 rounded-full">{knownWords.length}</span>
               </h2>
             </div>
-            <button
-              onClick={clearKnownWords}
-              className="px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm active:scale-95"
-            >
-              Forget All
-            </button>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {/* Import */}
+              <label className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-sm active:scale-95 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                Import JSON
+                <input
+                  type="file"
+                  ref={importInputRef}
+                  onChange={importKnownWords}
+                  accept=".json"
+                  className="hidden"
+                />
+              </label>
+
+              {/* Export */}
+              <button onClick={exportKnownWords} className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export
+              </button>
+
+              {/* Forget All */}
+              <button
+                onClick={clearKnownWords}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Forget All
+              </button>
+            </div>
           </div>
           <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to <strong className="font-bold text-gray-500 dark:text-gray-300">remove</strong></div>
 
@@ -230,45 +260,16 @@ export default function Home() {
               <li
                 key={word}
                 onClick={() => removeKnownWord(word)}
-                className="cursor-pointer bg-green-50/50 dark:bg-emerald-900/20 border border-transparent rounded-lg px-3 py-1.5 text-sm font-medium text-green-700 dark:text-emerald-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors duration-200"
+                className="cursor-pointer flex items-center gap-2 bg-green-50/50 dark:bg-emerald-900/20 border border-transparent rounded-lg px-3 py-1.5 text-sm font-medium text-green-700 dark:text-emerald-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors duration-200 group"
                 role="button"
               >
                 {word.toUpperCase()}
+                <svg className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </li>
             ))}
           </ul>
         </div>
       )}
-
-      <div className="mt-20 pt-10 border-t border-gray-100 dark:border-slate-800">
-        <div className="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-8 shadow-inner border border-gray-100 dark:border-slate-800">
-          <h3 className="text-xl font-bold text-gray-400 dark:text-slate-500 mb-6 uppercase tracking-wider">Data Management</h3>
-
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <label className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group">
-              <svg className="w-5 h-5 text-gray-400 dark:text-slate-500 group-hover:text-primary dark:group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-              <span className="font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white">Import JSON</span>
-              <input
-                type="file"
-                ref={importInputRef}
-                onChange={importKnownWords}
-                accept=".json"
-                className="hidden"
-              />
-            </label>
-
-            <button onClick={exportKnownWords} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-emerald-500/30 active:scale-95 transition-all">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Export Library
-            </button>
-
-            <button onClick={clearKnownWords} className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-6 py-3 rounded-xl font-bold hover:shadow-md active:scale-95 transition-all">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-              Clear All
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
