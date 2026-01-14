@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import WordPlayer from '../components/WordPlayer';
-import phrasalVerbsRaw from '../data/phrasalVerbs.json';
-import defaultKnownWordsRaw from '../data/defaultKnownWords.json';
-
-// Type assertion for imported JSONs if necessary, but usually standard import works
-const phrasalVerbs: string[] = phrasalVerbsRaw as string[];
-const defaultKnownWords: string[] = defaultKnownWordsRaw as string[];
+import { useState, useRef, useMemo, useEffect } from "react";
+import Speaker from "@/components/Speaker";
 
 interface WordFrequency {
   word: string;
@@ -15,220 +9,228 @@ interface WordFrequency {
 }
 
 export default function Home() {
-  const [wordFrequencies, setWordFrequencies] = useState<WordFrequency[]>([]);
+  const [fileContent, setFileContent] = useState<string>("");
   const [knownWords, setKnownWords] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  // Load known words from localStorage on mount
   useEffect(() => {
-    loadKnownWords();
+    const stored = localStorage.getItem("knownWords");
+    if (stored) {
+      setKnownWords(JSON.parse(stored));
+    } else {
+      // Load default if available
+      fetch('data/defaultKnownWords.json')
+        .then(res => res.json())
+        .then(data => {
+          if (data && Array.isArray(data)) {
+            setKnownWords(data)
+            localStorage.setItem("knownWords", JSON.stringify(data));
+          }
+        })
+        .catch(err => console.log("No default words found", err));
+    }
   }, []);
 
-  function loadKnownWords() {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('knownWords');
-      if (stored) {
-        try {
-          setKnownWords(JSON.parse(stored));
-        } catch (e) {
-          console.error("Failed to parse knownWords", e);
-          setKnownWords([]);
-        }
-      } else {
-        setKnownWords([...defaultKnownWords]);
-        // saveKnownWords() not strictly needed here as we can just set state, 
-        // but to sync local storage immediately:
-        localStorage.setItem('knownWords', JSON.stringify(defaultKnownWords));
-      }
-    }
-  }
+  // Save known words whenever they change
+  useEffect(() => {
+    localStorage.setItem("knownWords", JSON.stringify(knownWords));
+  }, [knownWords]);
 
-  function saveKnownWords(updatedWords: string[]) {
-    localStorage.setItem('knownWords', JSON.stringify(updatedWords));
-  }
-
-  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const rawText = e.target?.result as string;
-      if (rawText) processText(rawText);
+      const content = e.target?.result as string;
+      setFileContent(content);
     };
-
-    reader.onerror = (e) => {
-      console.error('Error reading file:', e);
-    };
-
     reader.readAsText(file);
+  };
 
-    // Reset input
-    if (event.target) event.target.value = '';
-  }
+  const wordFrequencies = useMemo(() => {
+    if (!fileContent) return [];
 
-  function processText(text: string) {
-    let cleanedText = text
-      .replace(/[^a-zA-Z\s']/g, ' ')
-      .toUpperCase();
+    const words = fileContent.toLowerCase().match(/\b[a-z']+\b/g) || [];
+    const frequencyMap: Record<string, number> = {};
 
-    // Handle phrasal verbs
-    phrasalVerbs.forEach(pv => {
-      const singleToken = pv.replace(/\s+/g, '_');
-      // Escape for regex if needed, but phrasal verbs usually plain text
-      const regex = new RegExp(`\\b${pv}\\b`, 'g');
-      cleanedText = cleanedText.replace(regex, singleToken);
+    words.forEach((word) => {
+      if (!knownWords.includes(word) && word.length > 2) { // Filter short words
+        frequencyMap[word] = (frequencyMap[word] || 0) + 1;
+      }
     });
 
-    let words = cleanedText.split(/\s+/).filter(w => w.trim() !== '');
-    words = words.filter(w => w.length > 1);
+    return Object.entries(frequencyMap)
+      .map(([word, count]) => ({ word, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 100); // Top 100
+  }, [fileContent, knownWords]);
 
-    const frequencyMap: Record<string, number> = {};
-    for (const w of words) {
-      frequencyMap[w] = (frequencyMap[w] || 0) + 1;
+  const addKnownWord = (word: string) => {
+    setKnownWords((prev) => [...prev, word]);
+  };
+
+  const removeKnownWord = (word: string) => {
+    setKnownWords((prev) => prev.filter((w) => w !== word));
+  };
+
+  const clearKnownWords = () => {
+    if (confirm("Are you sure you want to forget all known words?")) {
+      setKnownWords([]);
     }
+  };
 
-    let sortedFrequencies = Object.entries(frequencyMap)
-      .map(([word, count]) => ({ word: word.replace(/_/g, ' '), count }))
-      .sort((a, b) => b.count - a.count);
+  const exportKnownWords = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(knownWords));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "known_words.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
 
-    // Filter out known words
-    sortedFrequencies = sortedFrequencies.filter(item => !knownWords.includes(item.word));
-
-    setWordFrequencies(sortedFrequencies);
-  }
-
-  function addKnownWord(word: string) {
-    if (!knownWords.includes(word)) {
-      const updated = [...knownWords, word];
-      setKnownWords(updated);
-      saveKnownWords(updated);
-      setWordFrequencies(prev => prev.filter(item => item.word !== word));
-    }
-  }
-
-  function removeKnownWord(word: string) {
-    if (knownWords.includes(word)) {
-      const updated = knownWords.filter(w => w !== word);
-      setKnownWords(updated);
-      saveKnownWords(updated);
-    }
-  }
-
-  function clearKnownWords() {
-    setKnownWords([]);
-    saveKnownWords([]);
-  }
-
-  function exportKnownWords() {
-    const data = JSON.stringify(knownWords, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hour = String(now.getHours()).padStart(2, '0');
-    const minute = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const fileName = `knownWords-${year}${month}${day}-${hour}${minute}${seconds}.json`;
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function importKnownWords(event: React.ChangeEvent<HTMLInputElement>) {
+  const importKnownWords = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (readerEvent) => {
+    reader.onload = (e) => {
       try {
-        const textResult = readerEvent.target?.result as string;
-        const importedWords = JSON.parse(textResult);
-        console.log('Imported Words:', importedWords);
-
-        if (Array.isArray(importedWords)) {
-          const normalizedImportedWords = importedWords.map((word: unknown) => String(word).toUpperCase());
-          const set = new Set([...knownWords, ...normalizedImportedWords]);
-          const updated = Array.from(set);
-          setKnownWords(updated);
-          saveKnownWords(updated);
-
-          // Update frequencies
-          setWordFrequencies(prev => prev.filter(
-            item => !updated.includes(item.word.toUpperCase())
-          ));
-        } else {
-          console.error('Imported file does not contain an array of words.');
+        const content = JSON.parse(e.target?.result as string);
+        if (Array.isArray(content)) {
+          // Merge with existing
+          setKnownWords(prev => Array.from(new Set([...prev, ...content])));
         }
-      } catch (error) {
-        console.error('Error parsing JSON:', error);
+      } catch (err) {
+        alert("Invalid JSON file");
       }
     };
-
-    reader.onerror = (e) => {
-      console.error('Error reading file:', e);
-    };
-
     reader.readAsText(file);
-
-    if (event.target) event.target.value = '';
   }
 
+  const markAllAsKnown = () => {
+    const newWords = wordFrequencies.map(w => w.word);
+    setKnownWords(prev => Array.from(new Set([...prev, ...newWords])));
+  };
+
+  const clearFile = () => {
+    setFileContent("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
-    <div className="app max-w-6xl mx-auto p-4 text-center min-h-screen text-gray-800">
-      <h1 className="text-4xl font-bold mb-2">Vocabulary Analyzer</h1>
-      <div className="mb-4 text-black">Online <strong>file processor</strong> to extract words from documents, so you can learn them.</div>
+    <div className="app max-w-5xl mx-auto p-6 md:p-12 text-center min-h-screen text-gray-800 dark:text-gray-100 font-sans selection:bg-purple-200 dark:selection:bg-purple-900">
+      <header className="mb-12">
+        <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 drop-shadow-sm">
+          Vocabulary Analyzer
+        </h1>
+        <p className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
+          Your personal <strong className="font-semibold text-primary-600 dark:text-primary-400">linguistic companion</strong>. Extract, track, and master words from your documents.
+        </p>
+      </header>
 
-      <WordPlayer words={knownWords} />
-
-      <div className="import flex my-4 border border-dashed border-gray-600 p-4 bg-gray-100 items-center justify-center">
-        <div className="flex m-2 leading-none font-bold">Import Text:</div>
-        <div className="flex m-2 leading-none">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".srt,.txt,.sub,.md"
-          />
+      {/* Trainer Section */}
+      <section className="mb-16">
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1 max-w-[100px]"></div>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Trainer</h2>
+          <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1 max-w-[100px]"></div>
         </div>
-      </div>
+        <Speaker words={knownWords} />
+      </section>
 
       {wordFrequencies.length > 0 && (
-        <div className="mt-5">
-          <h2 className="text-2xl font-semibold">Words: {wordFrequencies.length}</h2>
-          <div className="text-sm text-gray-400 mb-2">Click them to mark them as known words</div>
-          <ol className="flex items-start flex-wrap mt-4 justify-center">
+        <div className="mt-12 animate-fade-in">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 px-2 border-b border-gray-200 dark:border-slate-800 pb-4 gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                Words from file
+                <span className="text-sm font-bold bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full">{wordFrequencies.length}</span>
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={markAllAsKnown}
+                className="px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm active:scale-95"
+              >
+                Known All
+              </button>
+              <button
+                onClick={clearFile}
+                className="px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900/50 rounded-lg transition-colors active:scale-95"
+              >
+                Clear List
+              </button>
+            </div>
+          </div>
+          <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to mark as known</div>
+
+          <ol className="flex items-start flex-wrap gap-3 justify-center">
             {wordFrequencies.map((item) => (
               <li
                 key={item.word}
                 onClick={() => addKnownWord(item.word)}
-                className="mx-1 p-2 px-3 border-purple-800 mb-4 rounded font-medium hover:bg-transparent hover:border-purple-800 border bg-purple-400/25 text-purple-800 cursor-pointer transition-colors"
+                className="group relative cursor-pointer bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-xl px-4 py-2 hover:shadow-md hover:border-primary/30 dark:hover:border-primary/50 hover:scale-105 active:scale-95 transition-all duration-200"
                 role="button"
               >
-                <b>{item.word.toUpperCase()}</b> <span className="count text-xs ml-1">{item.count}</span>
+                <b className="text-gray-700 dark:text-gray-200 font-bold group-hover:text-primary dark:group-hover:text-primary-400 transition-colors">{item.word.toUpperCase()}</b>
+                <span className="absolute -top-2 -right-2 bg-gray-100 dark:bg-slate-700 text-[10px] font-bold text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full shadow-sm border border-white dark:border-slate-600 group-hover:bg-primary group-hover:text-white transition-colors">
+                  {item.count}
+                </span>
               </li>
             ))}
           </ol>
         </div>
       )}
 
+      {/* File Upload Area - Moved after Words List */}
+      <div className="import mt-12 mb-12 transform transition-all hover:-translate-y-1">
+        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl cursor-pointer bg-white/50 dark:bg-slate-800/50 hover:bg-white/80 dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-lg transition-all group">
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <svg className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+            </svg>
+            <p className="mb-2 text-lg text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"><span className="font-semibold text-primary dark:text-primary-400">Click to upload text</span> or drag and drop</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">SRT, TXT, SUB, MD</p>
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".srt,.txt,.sub,.md"
+            className="hidden"
+          />
+        </label>
+      </div>
+
       {knownWords.length > 0 && (
-        <div className="mt-5">
-          <h2 className="text-2xl font-semibold">Known Words: {knownWords.length}</h2>
-          <div className="text-sm text-gray-400 mb-2">Click on each one to remove them</div>
-          <ul className="flex flex-wrap mt-4 justify-center">
+        <div className="mt-16 animate-fade-in">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 px-2 border-b border-gray-200 dark:border-slate-800 pb-4 gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                Known Words
+                <span className="text-sm font-bold bg-green-100 dark:bg-emerald-900/30 text-green-700 dark:text-emerald-400 px-3 py-1 rounded-full">{knownWords.length}</span>
+              </h2>
+            </div>
+            <button
+              onClick={clearKnownWords}
+              className="px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm active:scale-95"
+            >
+              Forget All
+            </button>
+          </div>
+          <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to <strong className="font-bold text-gray-500 dark:text-gray-300">remove</strong></div>
+
+          <ul className="flex flex-wrap gap-2 justify-center">
             {knownWords.map((word) => (
               <li
                 key={word}
                 onClick={() => removeKnownWord(word)}
-                className="mx-1 p-2 px-3 border-purple-800 mb-4 rounded font-medium hover:bg-transparent hover:border-purple-800 border bg-purple-400/25 text-purple-800 cursor-pointer transition-colors"
+                className="cursor-pointer bg-green-50/50 dark:bg-emerald-900/20 border border-transparent rounded-lg px-3 py-1.5 text-sm font-medium text-green-700 dark:text-emerald-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors duration-200"
                 role="button"
               >
                 {word.toUpperCase()}
@@ -238,24 +240,34 @@ export default function Home() {
         </div>
       )}
 
-      <div className="mt-8 border-t pt-4">
-        <div className="flex import my-4 border border-dashed border-gray-600 p-4 bg-gray-100 items-center justify-center">
-          <div className="flex m-2 leading-none font-bold">Import Words:</div>
-          <div className="flex m-2 leading-none">
-            <input
-              type="file"
-              ref={importInputRef}
-              onChange={importKnownWords}
-              accept=".json"
-            />
+      <div className="mt-20 pt-10 border-t border-gray-100 dark:border-slate-800">
+        <div className="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-8 shadow-inner border border-gray-100 dark:border-slate-800">
+          <h3 className="text-xl font-bold text-gray-400 dark:text-slate-500 mb-6 uppercase tracking-wider">Data Management</h3>
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            <label className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group">
+              <svg className="w-5 h-5 text-gray-400 dark:text-slate-500 group-hover:text-primary dark:group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+              <span className="font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white">Import JSON</span>
+              <input
+                type="file"
+                ref={importInputRef}
+                onChange={importKnownWords}
+                accept=".json"
+                className="hidden"
+              />
+            </label>
+
+            <button onClick={exportKnownWords} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-emerald-500/30 active:scale-95 transition-all">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Export Library
+            </button>
+
+            <button onClick={clearKnownWords} className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-6 py-3 rounded-xl font-bold hover:shadow-md active:scale-95 transition-all">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              Clear All
+            </button>
           </div>
         </div>
-        <button onClick={exportKnownWords} className="bg-green-600 hover:bg-green-700 px-4 py-1 rounded mr-2 text-white font-bold transition-colors">
-          Export Known Words
-        </button>
-        <button onClick={clearKnownWords} className="alert bg-red-600 hover:bg-red-700 px-4 py-1 rounded text-white font-bold transition-colors">
-          Forget them ALL!
-        </button>
       </div>
     </div>
   );
