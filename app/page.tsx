@@ -11,6 +11,8 @@ interface WordFrequency {
 export default function Home() {
   const [fileContent, setFileContent] = useState<string>("");
   const [knownWords, setKnownWords] = useState<string[]>([]);
+  const [ignoredWords, setIgnoredWords] = useState<string[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,7 +59,8 @@ export default function Home() {
     const frequencyMap: Record<string, number> = {};
 
     words.forEach((word) => {
-      if (!knownWords.includes(word) && word.length > 2) { // Filter short words
+      // Filter out known AND ignored words
+      if (!knownWords.includes(word) && !ignoredWords.includes(word) && word.length > 2) {
         frequencyMap[word] = (frequencyMap[word] || 0) + 1;
       }
     });
@@ -66,10 +69,19 @@ export default function Home() {
       .map(([word, count]) => ({ word, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 100); // Top 100
-  }, [fileContent, knownWords]);
+  }, [fileContent, knownWords, ignoredWords]);
 
   const addKnownWord = (word: string) => {
     setKnownWords((prev) => [...prev, word]);
+  };
+
+  const ignoreWord = (word: string) => {
+    setIgnoredWords((prev) => [...prev, word]);
+  };
+
+  const openDictionary = (word: string) => {
+    // Placeholder for later implementation
+    console.log(`Open dictionary for: ${word}`);
   };
 
   const removeKnownWord = (word: string) => {
@@ -101,7 +113,6 @@ export default function Home() {
       try {
         const content = JSON.parse(e.target?.result as string);
         if (Array.isArray(content)) {
-          // Merge with existing
           setKnownWords(prev => Array.from(new Set([...prev, ...content])));
         }
       } catch (err) {
@@ -118,6 +129,7 @@ export default function Home() {
 
   const clearFile = () => {
     setFileContent("");
+    setIgnoredWords([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -175,16 +187,47 @@ export default function Home() {
           </div>
           <div className="text-sm text-gray-400 italic mb-4 text-left px-2">Click to <strong className="font-bold text-gray-500 dark:text-gray-300">mark as known</strong></div>
 
-          <ol className="flex items-start flex-wrap gap-3 justify-center">
+          <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {wordFrequencies.map((item) => (
               <li
                 key={item.word}
                 onClick={() => addKnownWord(item.word)}
-                className="group relative cursor-pointer bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-xl px-4 py-2 hover:shadow-md hover:border-primary/30 dark:hover:border-primary/50 hover:scale-105 active:scale-95 transition-all duration-200"
+                className="group relative cursor-pointer bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-xl px-4 py-3 hover:shadow-md hover:border-primary/30 dark:hover:border-primary/50 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-between gap-3 w-full"
                 role="button"
               >
-                <b className="text-gray-700 dark:text-gray-200 font-bold group-hover:text-primary dark:group-hover:text-primary-400 transition-colors">{item.word.toUpperCase()}</b>
-                <span className="absolute -top-2 -right-2 bg-gray-100 dark:bg-slate-700 text-[10px] font-bold text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full shadow-sm border border-white dark:border-slate-600 group-hover:bg-primary group-hover:text-white transition-colors">
+                <b className="text-gray-700 dark:text-gray-200 font-bold group-hover:text-primary dark:group-hover:text-primary-400 transition-colors truncate text-lg flex-1 text-left">{item.word.toUpperCase()}</b>
+
+                {/* Controls - always visible */}
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-700/50 rounded-lg p-0.5 shrink-0">
+                  {/* Add */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); addKnownWord(item.word); }}
+                    className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-md transition-colors"
+                    title="Add to Known"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+
+                  {/* Info / Dictionary */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openDictionary(item.word); }}
+                    className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                    title="Dictionary"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </button>
+
+                  {/* Delete / Ignore */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); ignoreWord(item.word); }}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                    title="Ignore Word"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+
+                <span className="absolute -top-2 -right-2 bg-gray-100 dark:bg-slate-700 text-[10px] font-bold text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full shadow-sm border border-white dark:border-slate-600 z-10">
                   {item.count}
                 </span>
               </li>
